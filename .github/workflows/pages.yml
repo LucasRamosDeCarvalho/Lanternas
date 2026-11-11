@@ -1,0 +1,28 @@
+name: Lanternas CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Validar arquivos do site
+        run: |
+          test -s app/index.html
+          test -s app/tropa.html
+          test -s app/styles.css
+          test -s app/conteudo.js
+          test -s app/site.js
+          node --check app/conteudo.js
+          node --check app/site.js
