@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: lanternas-pages-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -26,3 +30,37 @@ jobs:
           test -s app/site.js
           node --check app/conteudo.js
           node --check app/site.js
+      - name: Preparar arquivos do Pages
+        run: |
+          mkdir -p _site/docs
+          cp -R app _site/app
+          cp docs/Tropas_dos_Lanternas_DC.md _site/docs/
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="pt-BR">
+          <meta charset="utf-8">
+          <title>Tropas dos Lanternas</title>
+          <meta http-equiv="refresh" content="0; url=app/">
+          <a href="app/">Abrir Tropas dos Lanternas</a>
+          </html>
+          HTML
+      - name: Enviar artefato do Pages
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name == 'push'
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
